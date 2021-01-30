@@ -39,10 +39,15 @@ class GCNnet(nn.Module):
 
         self.act = nn.ReLU()
 
-    def forward(self, data, device):
-        # data是输入数据，以字典的形式，需要有邻接矩阵和节点特征，由于这里的图都是一样的，所以只取第一个图。
-        graph = data["graph"].to(device)[0]  # [N,N]
-        flow_x = data["flow_x"].to(device)  # [B,N,D,H] 四个维度分别为： batch 节点 节点特征维度  H=1
+    def forward(self, graph, flow_data, device):
+        """
+        :param graph: tensor[N*N]
+        :param flow_data: tensor[batch_size * N * feature_size]
+        :param device:
+        :return:
+        """
+        graph = graph.to(device)[0]  # [N,N]
+        flow_x = flow_data.to(device)  # [B,N,D,H] 四个维度分别为： batch 节点 节点特征维度  H=1
         B, N = flow_x.size(0), flow_x.size(1)
         flow_x = flow_x.view(B, N, -1)  # [B, N, H*D]
         out1 = self.act(self.conv1(flow_x, graph))
