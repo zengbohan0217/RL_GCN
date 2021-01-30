@@ -1,5 +1,4 @@
-import simpy
-
+import model.DQN
 import random
 import simpy
 
@@ -18,12 +17,13 @@ class WorkStation(object):
     一个工作站，拥有特定数量的机器数。 一个客户首先申请服务。在对应服务时间完成后结束并离开工作站
     """
 
-    def __init__(self, env, num_machines, washtime):
+    def __init__(self, env, num_machines, washtime, list_num):
         self.env = env
         self.machine = simpy.Resource(env, num_machines)
         self.washtime = washtime
         self.allClient = 0
         self.accomplishClient = 0
+        self.list_num = list_num
 
     def wash(self, car):
         """服务流程"""
@@ -46,15 +46,15 @@ def Client(env, name, cw):
     print('%s 到达工作站 at %.2f.' % (name, env.now))
     with cw.machine.request() as request:
         yield request
-        print('%s 接受服务   at %.2f.' % (name, env.now))
+        print('%s 接受服务   at %.2f. in %d' % (name, env.now, cw.list_num))
         yield env.process(cw.wash(name))
-        print('%s 离开服务站 at %.2f.' % (name, env.now))
+        print('%s 离开服务站 at %.2f. in %d' % (name, env.now, cw.list_num))
 
 
-def setup(env, num_machines, washtime, t_inter, clientNumber):
+def setup(env, num_machines, washtime, t_inter, clientNumber, list_num):
     """创建一个工作站，几个初始客户，然后持续有客户到达. 每隔t_inter - 2, t_inter + 3分钟（可以自定义）."""
     # 创建工作站
-    workstation = WorkStation(env, num_machines, washtime)
+    workstation = WorkStation(env, num_machines, washtime, list_num)
 
     # 创建clientNumber个初始客户
     for i in range(clientNumber):
@@ -76,7 +76,7 @@ random.seed()
 # 创建一个环境并开始仿真
 env = simpy.Environment()
 for i in range(STATION_NUM):
-    env.process(setup(env, NUM_MACHINES, TIME_CONSUMING, TIME_INTERVAL, CLIENT_NUMBER))
+    env.process(setup(env, NUM_MACHINES, TIME_CONSUMING, TIME_INTERVAL, CLIENT_NUMBER, i))
 
 # 开始执行!
 env.run(until=SIM_TIME)
