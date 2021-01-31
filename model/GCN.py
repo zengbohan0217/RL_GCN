@@ -53,6 +53,9 @@ class GCNnet(nn.Module):
         B, N = flow_x.size(0), flow_x.size(1)
         flow_x = flow_x.view(B, N, -1)  # [B, N, H*D]
         out1 = self.conv1(flow_x, graph)
-        print(out1.device)
+        out1 = self.act(out1)
         out2 = self.conv2(out1, graph)
-        return out2.unsqueeze(2)  # [B,N,1,1]
+        out2 = self.act(out2)
+        # return out2.unsqueeze(2)  # [B,N,1,1]
+        out2 = out2.view(B, -1)   # [B, N]
+        return out2
