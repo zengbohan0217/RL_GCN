@@ -27,7 +27,8 @@ class DQN:
 
     def train_once(self, memory):
         """
-        state所保留的信息包括了点的类别，不同类别对应地信息，当前请求运输所在位置，派发资源多少等，graph中点的类别包括了救助站、救助点
+        state所保留的信息包括了点的类别，不同类别对应地信息，当前请求运输所在位置，派发资源多少等；
+        graph中点的类别包括了救助站、救助点，图中线段信息为点与点之间的距离
         """
         self.model_train.train(True)
         self.optimizer.zero_grad()
@@ -57,3 +58,13 @@ class DQN:
             self.model_pred.load_state_dict(self.model_train.state_dict())
             self.model_pred.eval()
         return loss / self.batch_num
+
+def epsilon_greedy(estimator, graph, input_state, eps, point_num):
+    action_pro = np.one(point_num, dtype=float) * eps / point_num
+    q_value = estimator(graph, input_state).detach().numpy()
+    best_action = np.argmax(q_value[0])
+    action_pro[best_action] += (1.0 - eps)
+    action = np.random.choice(np.arange(point_num), p=action_pro)
+    return action, best_action
+
+
