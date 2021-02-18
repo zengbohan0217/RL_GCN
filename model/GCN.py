@@ -50,6 +50,8 @@ class GCNnet(nn.Module):
         """
         graph = graph[0]  # [N,N]
         flow_x = flow_data  # [B,N,D,H] 四个维度分别为： batch 节点 节点特征维度  H=1
+        flow_x = torch.tensor(flow_x, dtype=torch.float32)
+        flow_x = flow_x.to(DEVICE)
         B, N = flow_x.size(0), flow_x.size(1)
         flow_x = flow_x.view(B, N, -1)  # [B, N, H*D]
         out1 = self.conv1(flow_x, graph)

@@ -4,6 +4,10 @@ import numpy as np
 from torch import nn, optim
 from tqdm import trange
 from GCN import *
+from collections import namedtuple
+
+Transition = namedtuple("Transition", ["state", "action", "reward", "next_state", "done"])
+# state and next_state is array, action reward and done is a number
 
 class DQN:
     def __call__(self, x):
