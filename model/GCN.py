@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
-DEVICE = torch.device('cuda')
+DEVICE = torch.device('cpu')
 
 class GCNconv(nn.Module):
     def __init__(self, in_c, out_c, bais=False):

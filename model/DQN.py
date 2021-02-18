@@ -59,7 +59,14 @@ class DQN:
             self.model_pred.eval()
         return loss / self.batch_num
 
+def get_epsilon(curr_step, decay_end_step, decay_start_step=0, start_eps=1, end_eps=0.1):
+    assert(decay_start_step < decay_end_step)
+    curr_step = min(curr_step, decay_end_step)
+    pos = max(0, curr_step - decay_start_step)
+    return start_eps + (end_eps - start_eps) * (pos) / (decay_end_step - decay_start_step)
+
 def epsilon_greedy(estimator, graph, input_state, eps, point_num):
+    # input_state batch_size is 1
     action_pro = np.one(point_num, dtype=float) * eps / point_num
     q_value = estimator(graph, input_state).detach().numpy()
     best_action = np.argmax(q_value[0])

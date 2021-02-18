@@ -1,5 +1,6 @@
 import simpy
 import random
+import time
 import model.DQN
 
 map = {"1": {'attri': "central_warehouse", 'dis': {"1": 0, "2": 10, "3": 3, "4": 7, "5": 6}},
@@ -8,6 +9,12 @@ map = {"1": {'attri': "central_warehouse", 'dis': {"1": 0, "2": 10, "3": 3, "4":
        "4": {'attri': "disa_area", 'dis': {"1": 7, "2": 8, "3": 5, "4": 0, "5": 9}},
        "5": {'attri': "disa_area", 'dis': {"1": 6, "2": 7, "3": 4, "4": 9, "5": 0}}
        }
+
+graph = [[0, 10, 3, 7, 6],
+         [10, 0, 4, 8, 7],
+         [3, 4, 0, 5, 4],
+         [7, 8, 5, 0, 9],
+         [6, 7, 4, 9, 0]]
 
 class central_warehouse(object):
     # 中央储备库，物资由此处送往物资分配中心
@@ -141,6 +148,7 @@ def setup(env, car_num):
                     place_dic[str(car_list[i].now_place)].get_item(car_list[i])
                     next_place = random.randint(1, 5)
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
+        #time.sleep(1)
         print(f"disa_1 serve: {place_dic['4'].serve}")
         print(f"disa_1 serve: {place_dic['5'].serve}")
 
