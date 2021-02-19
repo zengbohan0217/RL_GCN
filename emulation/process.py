@@ -1,7 +1,7 @@
 import simpy
 import random
 import time
-import model.DQN
+from model.DQN import *
 
 map = {"1": {'attri': "central_warehouse", 'dis': {"1": 0, "2": 10, "3": 3, "4": 7, "5": 6}},
        "2": {'attri': "central_warehouse", 'dis': {"1": 10, "2": 0, "3": 4, "4": 8, "5": 7}},
@@ -15,6 +15,8 @@ graph = [[0, 10, 3, 7, 6],
          [3, 4, 0, 5, 4],
          [7, 8, 5, 0, 9],
          [6, 7, 4, 9, 0]]
+feature_size = 4         # DQN参数
+hidden_num = 32          # DQN参数
 
 class central_warehouse(object):
     # 中央储备库，物资由此处送往物资分配中心
@@ -125,6 +127,16 @@ def setup(env, car_num):
     place_dic['4'] = disaster_area(env, 300, 4)
     place_dic['5'] = disaster_area(env, 200, 5)
 
+    model = DQN(graph=graph, point_num=5, batch_size=16, batch_num=2, in_c=feature_size, hid_c=hidden_num)
+    memory = []         # DQN经验池
+    epoch = 0           # 记录第几轮用于epsilon greedy
+    ########### epsilon参数
+    start_eps = 1.0
+    end_eps = 0.1
+    start_decay_epoch = 0
+    end_decay_epoch = 50
+    ###########
+
     while True:
         yield env.timeout(1)
         for i in range(car_num):
@@ -133,6 +145,9 @@ def setup(env, car_num):
                     # env.process(place_dic[str(car_list[i].now_place)].call_for_item(car_list[i]))
                     place_dic[str(car_list[i].now_place)].call_for_item(car_list[i])
                     next_place = random.randint(1, 5)
+                    epoch += 1
+                    curr_eps = get_epsilon(epoch, end_decay_epoch, start_decay_epoch, start_eps=start_eps,
+                                           end_eps=end_eps)
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
 
                 elif map[str(car_list[i].now_place)]['attri'] == 'Mater_dist':
@@ -141,14 +156,21 @@ def setup(env, car_num):
                     place_dic[str(car_list[i].now_place)].get_item(car_list[i])
                     place_dic[str(car_list[i].now_place)].serve_car(car_list[i])
                     next_place = random.randint(1, 5)
+                    epoch += 1
+                    curr_eps = get_epsilon(epoch, end_decay_epoch, start_decay_epoch, start_eps=start_eps,
+                                           end_eps=end_eps)
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
 
                 elif map[str(car_list[i].now_place)]['attri'] == 'disa_area':
                     # env.process(place_dic[str(car_list[i].now_place)].get_item(car_list[i]))
                     place_dic[str(car_list[i].now_place)].get_item(car_list[i])
                     next_place = random.randint(1, 5)
+                    epoch += 1
+                    curr_eps = get_epsilon(epoch, end_decay_epoch, start_decay_epoch, start_eps=start_eps,
+                                           end_eps=end_eps)
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
         #time.sleep(1)
+        print(f"currant epsilon is {curr_eps}")
         print(f"disa_1 serve: {place_dic['4'].serve}")
         print(f"disa_1 serve: {place_dic['5'].serve}")
 
