@@ -19,6 +19,7 @@ graph = torch.tensor(graph, dtype=torch.float32)
 point_num = 5
 feature_size = 4         # DQN参数
 hidden_num = 32          # DQN参数
+mem_size = 100           # 经验池大小
 
 class central_warehouse(object):
     # 中央储备库，物资由此处送往物资分配中心
@@ -113,6 +114,17 @@ class carry_all(object):
         self.now_place = end_pos
         self.flag = 0
 
+def model_train(model, now_state, action, memory, batch_size):
+    next_state = np.random.random(size=(5, 4, 1))  # 下一个状态 注意size
+    now_state_new = np.resize(now_state, (5, 4, 1))
+    reward = random.randint(1, 5)
+    done = 0
+    if len(memory) > mem_size:
+        memory.pop(0)
+    new_action = action - 1
+    memory.append(Transition(now_state_new, new_action, reward, next_state, done))
+    if len(memory) >= batch_size:
+        model.train_batch(memory)
 
 def setup(env, car_num):
     car_list = []    # 创建若干个运输车
@@ -153,6 +165,7 @@ def setup(env, car_num):
                     flow = np.random.random(size=(1, 5, 4, 1))            # 当前图中各节点状态
                     next_place, _ = epsilon_greedy(model, flow, curr_eps, point_num)
                     next_place += 1
+                    model_train(model=model, now_state=flow, action=next_place, memory=memory, batch_size=16)
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
 
                 elif map[str(car_list[i].now_place)]['attri'] == 'Mater_dist':
@@ -167,6 +180,7 @@ def setup(env, car_num):
                     flow = np.random.random(size=(1, 5, 4, 1))  # 当前图中各节点状态
                     next_place, _ = epsilon_greedy(model, flow, curr_eps, point_num)
                     next_place += 1
+                    model_train(model=model, now_state=flow, action=next_place, memory=memory, batch_size=16)
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
 
                 elif map[str(car_list[i].now_place)]['attri'] == 'disa_area':
@@ -179,11 +193,12 @@ def setup(env, car_num):
                     flow = np.random.random(size=(1, 5, 4, 1))  # 当前图中各节点状态
                     next_place, _ = epsilon_greedy(model, flow, curr_eps, point_num)
                     next_place += 1
+                    model_train(model=model, now_state=flow, action=next_place, memory=memory, batch_size=16)
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
-        #time.sleep(1)
         print(f"currant epsilon is {curr_eps}")
         print(f"disa_1 serve: {place_dic['4'].serve}")
         print(f"disa_2 serve: {place_dic['5'].serve}")
+        print(f"the length of the memory is {len(memory)}")
 
 env = simpy.Environment()
 env.process(setup(env, 3))
