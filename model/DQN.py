@@ -12,7 +12,7 @@ Transition = namedtuple("Transition", ["state", "action", "reward", "next_state"
 class DQN:
     def __call__(self, x):
         self.model_pred.eval()
-        return self.model_pred(x)
+        return self.model_pred(self.graph, x)
 
     def __init__(self, graph, point_num, batch_size, batch_num, in_c, hid_c, out_c=1, lr=5e-4, update_rate=1):
         super().__init__()
@@ -71,8 +71,8 @@ def get_epsilon(curr_step, decay_end_step, decay_start_step=0, start_eps=1, end_
 
 def epsilon_greedy(estimator, graph, input_state, eps, point_num):
     # input_state batch_size is 1
-    action_pro = np.one(point_num, dtype=float) * eps / point_num
-    q_value = estimator(graph, input_state).detach().numpy()
+    action_pro = np.ones(point_num, dtype=float) * eps / point_num
+    q_value = estimator(input_state).detach().numpy()
     best_action = np.argmax(q_value[0])
     action_pro[best_action] += (1.0 - eps)
     action = np.random.choice(np.arange(point_num), p=action_pro)
