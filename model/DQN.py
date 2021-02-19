@@ -69,7 +69,7 @@ def get_epsilon(curr_step, decay_end_step, decay_start_step=0, start_eps=1, end_
     pos = max(0, curr_step - decay_start_step)
     return start_eps + (end_eps - start_eps) * (pos) / (decay_end_step - decay_start_step)
 
-def epsilon_greedy(estimator, graph, input_state, eps, point_num):
+def epsilon_greedy(estimator, input_state, eps, point_num):
     # input_state batch_size is 1
     action_pro = np.ones(point_num, dtype=float) * eps / point_num
     q_value = estimator(input_state).detach().numpy()
