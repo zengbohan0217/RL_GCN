@@ -42,8 +42,8 @@ class central_warehouse(object):
 
     def call_for_item(self, car):
         if self.item_num >= car.carry_max - car.item_num:
-            car.item_num = car.carry_max
             self.item_num -= car.carry_max - car.item_num
+            car.item_num = car.carry_max
         else:
             car.item_num += self.item_num
             self.item_num = 0
@@ -67,8 +67,8 @@ class Material_Redistribution(object):
 
     def serve_car(self, car):
         if self.item_num >= car.carry_max - car.item_num:
-            car.item_num = car.carry_max
             self.item_num -= car.carry_max - car.item_num
+            car.item_num = car.carry_max
         else:
             car.item_num += self.item_num
             self.item_num = 0
