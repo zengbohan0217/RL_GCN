@@ -88,8 +88,8 @@ class disaster_area(object):
             car.item_num -= self.need_item - self.now_item
             self.now_item = self.need_item
         else:
+            self.now_item += car.item_num
             car.item_num = 0
-            self.now_item += self.need_item
         self.serve = self.now_item/self.need_item
         print(f"disaster area {self.number} get the car {car.car_number} serve in {self.env.now}")
 
@@ -115,7 +115,7 @@ class carry_all(object):
 def setup(env, car_num):
     car_list = []    # 创建若干个运输车
     for i in range(car_num):
-        carry_max = random.randint(50, 100)
+        carry_max = random.randint(100, 150)
         start_place = random.randint(1, 2)
         car = carry_all(env, carry_max, i+1, start_place)
         car_list.append(car)
@@ -123,9 +123,9 @@ def setup(env, car_num):
     place_dic = {}
     place_dic['1'] = central_warehouse(env, 300, 1)
     place_dic['2'] = central_warehouse(env, 400, 2)
-    place_dic['3'] = Material_Redistribution(env, 50, 3)
-    place_dic['4'] = disaster_area(env, 300, 4)
-    place_dic['5'] = disaster_area(env, 200, 5)
+    place_dic['3'] = Material_Redistribution(env, 250, 3)
+    place_dic['4'] = disaster_area(env, 3000, 4)
+    place_dic['5'] = disaster_area(env, 2000, 5)
 
     model = DQN(graph=graph, point_num=5, batch_size=16, batch_num=2, in_c=feature_size, hid_c=hidden_num)
     memory = []         # DQN经验池
@@ -172,7 +172,7 @@ def setup(env, car_num):
         #time.sleep(1)
         print(f"currant epsilon is {curr_eps}")
         print(f"disa_1 serve: {place_dic['4'].serve}")
-        print(f"disa_1 serve: {place_dic['5'].serve}")
+        print(f"disa_2 serve: {place_dic['5'].serve}")
 
 env = simpy.Environment()
 env.process(setup(env, 3))
