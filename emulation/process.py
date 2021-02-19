@@ -15,6 +15,8 @@ graph = [[0, 10, 3, 7, 6],
          [3, 4, 0, 5, 4],
          [7, 8, 5, 0, 9],
          [6, 7, 4, 9, 0]]
+graph = torch.tensor(graph, dtype=torch.float32)
+point_num = 5
 feature_size = 4         # DQN参数
 hidden_num = 32          # DQN参数
 
@@ -144,10 +146,13 @@ def setup(env, car_num):
                 if map[str(car_list[i].now_place)]['attri'] == 'central_warehouse':
                     # env.process(place_dic[str(car_list[i].now_place)].call_for_item(car_list[i]))
                     place_dic[str(car_list[i].now_place)].call_for_item(car_list[i])
-                    next_place = random.randint(1, 5)
+                    # next_place = random.randint(1, 5)
                     epoch += 1
                     curr_eps = get_epsilon(epoch, end_decay_epoch, start_decay_epoch, start_eps=start_eps,
                                            end_eps=end_eps)
+                    flow = np.random.random(size=(1, 5, 4, 1))            # 当前图中各节点状态
+                    next_place, _ = epsilon_greedy(model, flow, curr_eps, point_num)
+                    next_place += 1
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
 
                 elif map[str(car_list[i].now_place)]['attri'] == 'Mater_dist':
@@ -155,19 +160,25 @@ def setup(env, car_num):
                     # env.process(place_dic[str(car_list[i].now_place)].serve_car(car_list[i]))
                     place_dic[str(car_list[i].now_place)].get_item(car_list[i])
                     place_dic[str(car_list[i].now_place)].serve_car(car_list[i])
-                    next_place = random.randint(1, 5)
+                    # next_place = random.randint(1, 5)
                     epoch += 1
                     curr_eps = get_epsilon(epoch, end_decay_epoch, start_decay_epoch, start_eps=start_eps,
                                            end_eps=end_eps)
+                    flow = np.random.random(size=(1, 5, 4, 1))  # 当前图中各节点状态
+                    next_place, _ = epsilon_greedy(model, flow, curr_eps, point_num)
+                    next_place += 1
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
 
                 elif map[str(car_list[i].now_place)]['attri'] == 'disa_area':
                     # env.process(place_dic[str(car_list[i].now_place)].get_item(car_list[i]))
                     place_dic[str(car_list[i].now_place)].get_item(car_list[i])
-                    next_place = random.randint(1, 5)
+                    # next_place = random.randint(1, 5)
                     epoch += 1
                     curr_eps = get_epsilon(epoch, end_decay_epoch, start_decay_epoch, start_eps=start_eps,
                                            end_eps=end_eps)
+                    flow = np.random.random(size=(1, 5, 4, 1))  # 当前图中各节点状态
+                    next_place, _ = epsilon_greedy(model, flow, curr_eps, point_num)
+                    next_place += 1
                     env.process(car_list[i].trans(car_list[i].now_place, next_place))
         #time.sleep(1)
         print(f"currant epsilon is {curr_eps}")
