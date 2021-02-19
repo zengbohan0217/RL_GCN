@@ -126,6 +126,7 @@ def model_train(model, now_state, action, memory, batch_size):
     if len(memory) >= batch_size:
         model.train_batch(memory)
 
+
 def setup(env, car_num):
     car_list = []    # 创建若干个运输车
     for i in range(car_num):
