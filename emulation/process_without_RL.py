@@ -15,7 +15,7 @@ map_cwh = {"1": {"1": 3},
            "2": {"1": 4}}      # 代表中央储备库1号与2号和物资分配中心1号之间的距离
 
 map_da = {"1": {"1": 5},
-          "2": {"2": 4}}       # 代表受灾地1号与2号和物资分配中心1号之间的距离
+          "2": {"1": 4}}       # 代表受灾地1号与2号和物资分配中心1号之间的距离
 
 
 class central_warehouse(object):
@@ -64,7 +64,7 @@ class disaster_area(object):
 
 class carry_all_0(object):
     # 运输车甲，在中央储备库和物资调度中心之间运转
-    def __init__(self, env, carry_max, base_speed, place_num):
+    def __init__(self, env, carry_max, base_speed, place_num, car_num):
         """
         :param env: 进程
         :param carry_max: 车辆最大配重
@@ -72,20 +72,59 @@ class carry_all_0(object):
         :param place_num: 定义运输车初始在哪个中央储备库
         """
         self.env = env
+        self.car_num = car_num          # 运输车甲编号
         self.road_level = 1             # 道路等级，根据map来转变
         self.carry_max = carry_max
         self.item_now = 0               # 当前运输车的载重
         self.now_place_type = "central_warehouse"
         self.now_place_num = place_num
         self.base_speed = base_speed
+        self.base_count = 1             # 假设基础油耗为1升
         self.flag_load = 0              # 装卸进程管理
         self.flag_trans = 0             # 运输车移动进程管理
 
     def upload_car(self):
-        # 由于同时装卸货车辆数目不做限制，因此就在运输车类里进行装卸货
+        # 由于同时装卸货车辆数目不做限制，因此就在运输车类里进行装卸货，并且中央储备库物资无限
         self.flag_load = 1
         yield self.env.timeout(1)       # 装卸货所需时间为0.5小时
+        print(f"car_0 {self.car_num} finish upload at {self.now_place_type} {self.now_place_num}")
         self.item_now = self.carry_max
         self.flag_load = 0
+
+    def down_load(self, MR):
+        # 当运输车甲抵达物资调度中心后开始卸货
+        self.flag_load = 1
+        yield self.env.timeout(1)       # 装卸货所需时间为0.5小时
+        print(f"car_0 {self.car_num} finish download at {self.now_place_type} {self.now_place_num}")
+        if self.item_now > MR.item_max - MR.item_num:
+            self.item_now -= MR.item_max - MR.item_num
+            MR.item_num = MR.item_max
+        else:
+            MR.item_num += self.item_now
+            self.item_now = 0
+        self.flag_load = 0
+
+
+    def trans(self, start_pos, end_pos, end_pos_type):
+        """
+        :param start_pos: 出发点编号
+        :param end_pos: 目的地编号
+        :param end_pos_type: 目的地类型，包括了中央储备库和物资调度中心
+        :return:
+        """
+        self.flag_trans = 1
+        if self.road_level == 1:
+            if self.now_place_type == "central_warehouse":
+                print(f"start trans from cwh {start_pos} to MR {end_pos}")
+                yield self.env.timeout(map_cwh[str(start_pos)][str(end_pos)] / self.base_speed)
+            elif self.now_place_type == "Material_Redistribution":
+                print(f"start trans from MR {start_pos} to cwh {end_pos}")
+                yield self.env.timeout(map_cwh[str(end_pos)][str(start_pos)] / self.base_speed)
+        # 等级2 3尚未构建
+        print(f"arrive at {end_pos_type} {end_pos}")
+        self.now_place_type = end_pos_type  # 地点类型转换
+        self.now_place_num = end_pos        # 地点编号转换
+        self.flag_trans = 0
+
 
 
