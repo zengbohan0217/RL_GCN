@@ -115,16 +115,62 @@ class carry_all_0(object):
         self.flag_trans = 1
         if self.road_level == 1:
             if self.now_place_type == "central_warehouse":
-                print(f"start trans from cwh {start_pos} to MR {end_pos}")
+                print(f"car_0 {self.car_num} start trans from cwh {start_pos} to MR {end_pos}")
                 yield self.env.timeout(map_cwh[str(start_pos)][str(end_pos)] / self.base_speed)
             elif self.now_place_type == "Material_Redistribution":
-                print(f"start trans from MR {start_pos} to cwh {end_pos}")
+                print(f"car_0 {self.car_num} start trans from MR {start_pos} to cwh {end_pos}")
                 yield self.env.timeout(map_cwh[str(end_pos)][str(start_pos)] / self.base_speed)
         # 等级2 3尚未构建
-        print(f"arrive at {end_pos_type} {end_pos}")
+        print(f"car_0 {self.car_num} arrive at {end_pos_type} {end_pos}")
         self.now_place_type = end_pos_type  # 地点类型转换
         self.now_place_num = end_pos        # 地点编号转换
         self.flag_trans = 0
+
+
+def set_up(env, car_0_num):
+    car_0_list = []
+    for i in range(car_0_num):
+        carry_max = random.randint(100, 150)
+        start_place = random.randint(1, 2)
+        car_0 = carry_all_0(env, carry_max, 1, start_place, i+1)
+        car_0_list.append(car_0)
+
+    cwh_dic = {}
+    MR_dic = {}
+    da_dic = {}
+    cwh_dic["1"] = central_warehouse(env, 1)
+    cwh_dic["2"] = central_warehouse(env, 2)
+    MR_dic["1"] = Material_Redistribution(env, 500, 1)
+    da_dic["1"] = disaster_area(env, 3000, 1, 50)
+    da_dic["2"] = disaster_area(env, 4000, 2, 50)
+
+    while True:
+        yield env.timeout(1)
+        for i in range(car_0_num):
+            if car_0_list[i].flag_load == 0 and car_0_list[i].flag_trans == 0:
+                # 当运输车两个进程都没有被占用，则可以进行操作
+                if car_0_list[i].now_place_type == "central_warehouse":
+                    # 当运输车在中央储备库如下处理
+                    if car_0_list[i].item_now != 0:
+                        # 装满了，可以上路了
+                        MR_num = 1          # 目前只设定了一个物资分配中心
+                        env.process(car_0_list[i].trans(car_0_list[i].now_place_num, MR_num, "Material_Redistribution"))
+                    elif car_0_list[i].item_now == 0:
+                        env.process(car_0_list[i].upload_car())
+
+                elif car_0_list[i].now_place_type == "Material_Redistribution":
+                    if car_0_list[i].item_now != 0 and MR_dic[str(car_0_list[i].now_place_num)].item_num != MR_dic[str(car_0_list[i].now_place_num)].item_max:
+                        # 开始卸货
+                        env.process(car_0_list[i].down_load(MR_dic[str(car_0_list[i].now_place_num)]))
+                    elif car_0_list[i].item_now == 0 or MR_dic[str(car_0_list[i].now_place_num)].item_num == MR_dic[str(car_0_list[i].now_place_num)].item_max:
+                        # 卸完货要返回中央储备库了
+                        cwh_num = random.randint(1, 2)
+                        env.process(car_0_list[i].trans(car_0_list[i].now_place_num, cwh_num, "central_warehouse"))
+
+
+env = simpy.Environment()
+env.process(set_up(env, 3))
+env.run(until=100)
 
 
 
